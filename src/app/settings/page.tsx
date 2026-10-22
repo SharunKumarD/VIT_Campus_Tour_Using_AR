@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
+import { ChevronIcon } from "@/components/icons.tsx";
 import { StatusPill } from "@/components/DataNotice.tsx";
 import { PageHeader } from "@/components/PageHeader.tsx";
 import { getCampusPack } from "@/lib/campus/store.ts";
@@ -54,6 +56,17 @@ export default function SettingsPage() {
           </p>
         </section>
 
+        <section aria-labelledby="ar-h">
+          <h2 id="ar-h" className="mb-2 text-lg font-bold">AR camera</h2>
+          <Link href="/ar-check/" className="flex min-h-16 items-center gap-3 rounded-xl border border-line bg-card px-4 py-3">
+            <span className="flex-1">
+              <span className="block font-semibold">Check AR on this phone</span>
+              <span className="mt-0.5 block text-sm text-muted">See if ARCore works here and try the camera test</span>
+            </span>
+            <ChevronIcon className="h-5 w-5 text-muted" />
+          </Link>
+        </section>
+
         <section aria-labelledby="data-h">
           <h2 id="data-h" className="mb-2 text-lg font-bold">Campus data</h2>
           <dl className="overflow-hidden rounded-xl border border-line bg-card text-sm">
@@ -78,7 +91,7 @@ export default function SettingsPage() {
         <section aria-labelledby="privacy-h">
           <h2 id="privacy-h" className="mb-2 text-lg font-bold">Privacy</h2>
           <p className="text-sm leading-relaxed">
-            This build stores only the settings above, on this phone. It does not use your location or camera yet, and sends nothing over the internet.
+            This build stores only the settings above, on this phone. It does not use your location. The camera is used only while the AR test screen is open, and nothing is recorded or sent over the internet.
           </p>
           <button
             type="button"

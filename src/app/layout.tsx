@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import { BackButtonHandler } from "@/components/BackButtonHandler.tsx";
 import { BottomNav } from "@/components/BottomNav.tsx";
 import "./globals.css";
 
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           {children}
         </main>
         <BottomNav />
+        <BackButtonHandler />
       </body>
     </html>
   );
