@@ -7,6 +7,9 @@
  */
 
 import { Capacitor, registerPlugin } from "@capacitor/core";
+import { parseNavSession, type NavSession } from "./nav-session.ts";
+
+export type { NavOutcome, NavSession } from "./nav-session.ts";
 
 export type ArAvailability =
   | "SUPPORTED_INSTALLED"
@@ -50,6 +53,7 @@ export type ArErrorCode =
   | "RENDER_INIT_FAILED"
   | "FRAME_FAILED"
   | "AVAILABILITY_ERROR"
+  | "BAD_ROUTE"
   | "NOT_ANDROID"
   | "UNKNOWN";
 
@@ -66,7 +70,10 @@ interface ImmersiveArPlugin {
   checkAvailability(): Promise<AvailabilityResult>;
   requestInstall(): Promise<{ status: "INSTALLED" | "INSTALL_REQUESTED" }>;
   openArTest(): Promise<ArTestResult>;
+  startNavigation(options: { payload: string }): Promise<{ outcome: string; resultJson?: string | null }>;
 }
+
+
 
 const Native = registerPlugin<ImmersiveArPlugin>("ImmersiveAr");
 
@@ -77,7 +84,7 @@ function toArError(e: unknown): ArError {
   const known: readonly string[] = [
     "CAMERA_DENIED", "CAMERA_UNAVAILABLE", "DEVICE_NOT_COMPATIBLE", "INSTALL_DECLINED", "INSTALL_ERROR",
     "ARCORE_NOT_INSTALLED", "ARCORE_TOO_OLD", "APP_TOO_OLD", "SESSION_FAILED", "RENDER_INIT_FAILED",
-    "FRAME_FAILED", "AVAILABILITY_ERROR",
+    "FRAME_FAILED", "AVAILABILITY_ERROR", "BAD_ROUTE",
   ];
   const code = err?.code && known.includes(err.code) ? (err.code as ArErrorCode) : "UNKNOWN";
   return new ArError(code, err?.message || "Unknown AR error");
@@ -105,6 +112,17 @@ export async function openArTest(): Promise<ArTestResult> {
   if (!isAndroidApp()) throw new ArError("NOT_ANDROID", "AR is only available in the Android app.");
   try {
     return await Native.openArTest();
+  } catch (e) {
+    throw toArError(e);
+  }
+}
+
+/** Start AR route guidance. The payload comes from buildNavPayload(). */
+export async function startArNavigation(payload: object): Promise<NavSession> {
+  if (!isAndroidApp()) throw new ArError("NOT_ANDROID", "AR is only available in the Android app.");
+  try {
+    const r = await Native.startNavigation({ payload: JSON.stringify(payload) });
+    return parseNavSession(r.outcome, r.resultJson);
   } catch (e) {
     throw toArError(e);
   }

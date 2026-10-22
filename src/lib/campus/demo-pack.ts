@@ -147,6 +147,7 @@ export const DEMO_CAMPUS_PACK: CampusPack = {
     { id: "poi-hostel", name: "Demo Hostel (residents only)", category: "hostel", nodeId: "hostel", aliases: ["hostel"], provenance: DEMO },
   ],
   checkpoints: [
+    { id: "cp-gate", markerPayload: "VITIAR-CP-0003", nodeId: "gate", level: 0, facingDeg: 0, markerVersion: 1, provenance: DEMO },
     { id: "cp-a-lobby", markerPayload: "VITIAR-CP-0001", nodeId: "a-lobby", buildingId: "demo-block-a", level: 0, facingDeg: 0, markerVersion: 1, provenance: DEMO },
     { id: "cp-a-corr-1", markerPayload: "VITIAR-CP-0002", nodeId: "a-corr-1", buildingId: "demo-block-a", level: 1, facingDeg: 0, markerVersion: 1, provenance: DEMO },
   ],

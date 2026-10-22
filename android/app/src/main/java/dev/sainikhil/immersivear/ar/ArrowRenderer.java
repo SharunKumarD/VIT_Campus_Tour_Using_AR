@@ -53,6 +53,11 @@ final class ArrowRenderer {
     }
 
     void draw(float[] model, float[] view, float[] projection) {
+        draw(model, view, projection, 0.96f, 0.70f, 0.0f);
+    }
+
+    /** Draw with a custom fill colour (e.g. green for the destination). */
+    void draw(float[] model, float[] view, float[] projection, float r, float g, float b) {
         Matrix.multiplyMM(modelView, 0, view, 0, model, 0);
         Matrix.multiplyMM(mvp, 0, projection, 0, modelView, 0);
 
@@ -65,7 +70,7 @@ final class ArrowRenderer {
         GLES20.glVertexAttribPointer(aPosition, 3, GLES20.GL_FLOAT, false, 0, edge);
         GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, EDGE.length / 3);
 
-        GLES20.glUniform4f(uColor, 0.96f, 0.70f, 0.0f, 1f); // amber fill
+        GLES20.glUniform4f(uColor, r, g, b, 1f); // fill
         GLES20.glVertexAttribPointer(aPosition, 3, GLES20.GL_FLOAT, false, 0, fill);
         GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, FILL.length / 3);
 

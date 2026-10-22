@@ -70,6 +70,13 @@ test("rejects a checkpoint whose level does not match its node", () => {
   expectError((p) => (p.checkpoints[0].level = 1), /do not match its node/);
 });
 
+test("outdoor checkpoints have no building; indoor ones must match their node", () => {
+  const ok = copy();
+  assert.equal(validateCampusPack(ok).ok, true, "the outdoor gate checkpoint is valid without a buildingId");
+  expectError((p) => (p.checkpoints.find((c: any) => c.id === "cp-gate").buildingId = "demo-lib"), /do not match its node/);
+  expectError((p) => delete p.checkpoints.find((c: any) => c.id === "cp-a-lobby").buildingId, /do not match its node/);
+});
+
 test("rejects indoor nodes without a building", () => {
   expectError((p) => delete p.nodes.find((n: any) => n.id === "lib-hall").buildingId, /indoor nodes must have a buildingId/);
 });

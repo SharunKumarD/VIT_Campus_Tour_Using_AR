@@ -191,7 +191,7 @@ export function validateCampusPack(input: unknown): ValidationResult {
     }
     const node = isStr(c.nodeId) ? nodeById.get(c.nodeId) : undefined;
     if (!node) err(`${where}: unknown nodeId "${String(c.nodeId)}"`);
-    if (!isStr(c.buildingId) || !buildingIds.has(c.buildingId)) err(`${where}: unknown buildingId`);
+    if (c.buildingId !== undefined && (!isStr(c.buildingId) || !buildingIds.has(c.buildingId))) err(`${where}: unknown buildingId`);
     if (!isInt(c.level)) err(`${where}: level must be an integer`);
     if (node && (node.level !== c.level || node.buildingId !== c.buildingId)) err(`${where}: building/level do not match its node`);
     if (!isNum(c.facingDeg) || c.facingDeg < 0 || c.facingDeg >= 360) err(`${where}: facingDeg must be in [0, 360)`);

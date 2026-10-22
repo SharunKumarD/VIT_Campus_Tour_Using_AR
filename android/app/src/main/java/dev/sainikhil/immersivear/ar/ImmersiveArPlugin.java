@@ -92,10 +92,53 @@ public class ImmersiveArPlugin extends Plugin {
         launchArTest(call);
     }
 
+    /**
+     * Start AR route guidance. Option "payload": JSON route built by
+     * src/lib/native/nav-payload.ts. Resolves with the session result.
+     */
+    @PluginMethod
+    public void startNavigation(PluginCall call) {
+        String payload = call.getString("payload");
+        if (payload == null || payload.isEmpty()) {
+            call.reject("No route was provided.", "BAD_ROUTE");
+            return;
+        }
+        if (getPermissionState(CAMERA) != PermissionState.GRANTED) {
+            requestPermissionForAlias(CAMERA, call, "cameraPermissionResult");
+            return;
+        }
+        launchNavigation(call);
+    }
+
+    private void launchNavigation(PluginCall call) {
+        Intent intent = new Intent(getContext(), ArNavActivity.class);
+        intent.putExtra(ArNavActivity.EXTRA_PAYLOAD, call.getString("payload"));
+        startActivityForResult(call, intent, "navigationResult");
+    }
+
+    @ActivityCallback
+    private void navigationResult(PluginCall call, ActivityResult result) {
+        if (call == null) return;
+        Intent data = result.getData();
+        if (data != null && data.hasExtra(ArTestActivity.EXTRA_ERROR_CODE)) {
+            call.reject(
+                data.getStringExtra(ArTestActivity.EXTRA_ERROR_MESSAGE),
+                data.getStringExtra(ArTestActivity.EXTRA_ERROR_CODE)
+            );
+            return;
+        }
+        JSObject ret = new JSObject();
+        ret.put("outcome", data != null && data.hasExtra(ArNavActivity.EXTRA_OUTCOME)
+            ? data.getStringExtra(ArNavActivity.EXTRA_OUTCOME) : "ended");
+        ret.put("resultJson", data != null ? data.getStringExtra(ArNavActivity.EXTRA_RESULT_JSON) : null);
+        call.resolve(ret);
+    }
+
     @PermissionCallback
     private void cameraPermissionResult(PluginCall call) {
         if (getPermissionState(CAMERA) == PermissionState.GRANTED) {
-            launchArTest(call);
+            if ("startNavigation".equals(call.getMethodName())) launchNavigation(call);
+            else launchArTest(call);
         } else {
             call.reject("Camera permission is needed for AR. You can allow it in Android Settings > Apps.", "CAMERA_DENIED");
         }

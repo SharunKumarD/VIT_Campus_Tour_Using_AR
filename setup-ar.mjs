@@ -35,27 +35,41 @@ edit(GRADLE, (s) => {
   return [s.slice(0, brace) + line + s.slice(brace), `added com.google.ar:core:${ARCORE_VERSION}`];
 });
 
-// 2. Manifest: camera permission, AR as OPTIONAL (app still installs on non-AR phones), AR activity
+// 2. Manifest: camera permission, AR as OPTIONAL (app still installs on non-AR phones), AR screens.
+//    Each piece is checked separately, so this also upgrades a project set up by an earlier version.
+const AR_ACTIVITIES = ["ArTestActivity", "ArNavActivity"];
 edit(MANIFEST, (s) => {
-  if (s.includes("com.google.ar.core")) return [s, "AR entries already present"];
   if (!s.includes("</application>") || !s.includes("</manifest>")) return "ERROR: unexpected manifest structure";
-  const perms =
-    `    <!-- AR: camera access, and ARCore is optional so non-AR phones can still install the app -->\n` +
-    `    <uses-permission android:name="android.permission.CAMERA" />\n` +
-    `    <uses-feature android:name="android.hardware.camera.ar" android:required="false" />\n` +
-    `    <uses-feature android:name="android.hardware.camera" android:required="false" />\n` +
-    `    <uses-feature android:glEsVersion="0x00020000" android:required="true" />\n`;
-  const app =
-    `        <meta-data android:name="com.google.ar.core" android:value="optional" />\n` +
-    `        <activity\n` +
-    `            android:name=".ar.ArTestActivity"\n` +
-    `            android:exported="false"\n` +
-    `            android:screenOrientation="portrait"\n` +
-    `            android:configChanges="orientation|screenSize|keyboardHidden"\n` +
-    `            android:theme="@style/AppTheme.NoActionBar" />\n`;
-  let out = s.replace("</application>", app + "    </application>");
-  out = out.replace("</manifest>", perms + "</manifest>");
-  return [out, "added CAMERA permission, optional ARCore, ArTestActivity"];
+  const added = [];
+  let out = s;
+  const beforeManifestEnd = (xml) => { out = out.replace("</manifest>", xml + "</manifest>"); };
+  const beforeAppEnd = (xml) => { out = out.replace("</application>", xml + "    </application>"); };
+
+  if (!out.includes("android.permission.CAMERA")) {
+    beforeManifestEnd(
+      `    <!-- AR: camera access, and ARCore is optional so non-AR phones can still install the app -->\n` +
+      `    <uses-permission android:name="android.permission.CAMERA" />\n` +
+      `    <uses-feature android:name="android.hardware.camera.ar" android:required="false" />\n` +
+      `    <uses-feature android:name="android.hardware.camera" android:required="false" />\n` +
+      `    <uses-feature android:glEsVersion="0x00020000" android:required="true" />\n`);
+    added.push("CAMERA permission");
+  }
+  if (!out.includes('android:name="com.google.ar.core"')) {
+    beforeAppEnd(`        <meta-data android:name="com.google.ar.core" android:value="optional" />\n`);
+    added.push("optional ARCore");
+  }
+  for (const name of AR_ACTIVITIES) {
+    if (out.includes(`.ar.${name}"`)) continue;
+    beforeAppEnd(
+      `        <activity\n` +
+      `            android:name=".ar.${name}"\n` +
+      `            android:exported="false"\n` +
+      `            android:screenOrientation="portrait"\n` +
+      `            android:configChanges="orientation|screenSize|keyboardHidden"\n` +
+      `            android:theme="@style/AppTheme.NoActionBar" />\n`);
+    added.push(name);
+  }
+  return [out, added.length ? `added ${added.join(", ")}` : "AR entries already present"];
 });
 
 // 3. Register the plugin in MainActivity

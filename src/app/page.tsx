@@ -111,8 +111,8 @@ export default function HomePage() {
       <section aria-labelledby="coming" className="rounded-xl border border-dashed border-line px-4 py-3">
         <h2 id="coming" className="font-semibold">Not in this build yet</h2>
         <p className="mt-1 text-sm leading-relaxed text-muted">
-          Live location, AR route guidance, indoor QR checkpoints and offline map downloads are being built next.
-          You can already test the AR camera from Settings. Routes start from {shortName(start.name)} or a place you choose.
+          Live location, QR scanning of markers and offline map downloads are being built next. AR guidance already
+          works from a demo marker: open a place and use Guide me with AR. Routes start from {shortName(start.name)} or a place you choose.
         </p>
       </section>
     </div>

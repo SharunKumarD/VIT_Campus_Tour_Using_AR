@@ -111,7 +111,8 @@ export interface Checkpoint {
   /** Exact text encoded in the printed QR code / marker. Never a URL to open. */
   markerPayload: string;
   nodeId: string;
-  buildingId: string;
+  /** Building the marker is in. Omitted for outdoor markers (e.g. at a gate). */
+  buildingId?: string;
   level: number;
   /** Direction the user faces when scanning the marker, degrees clockwise from north. */
   facingDeg: number;

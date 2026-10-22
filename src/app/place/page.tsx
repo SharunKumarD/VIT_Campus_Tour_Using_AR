@@ -12,6 +12,7 @@ import { CATEGORY_LABEL } from "@/lib/campus/search.ts";
 import { findRouteToPoi, formatDistance, REASON_LABEL } from "@/lib/routing/index.ts";
 import { formatDuration, profileFromPrefs } from "@/lib/settings/prefs.ts";
 import { usePrefs } from "@/lib/settings/usePrefs.ts";
+import { ArGuidance } from "@/components/ArGuidance.tsx";
 
 function PlaceScreen() {
   const params = useSearchParams();
@@ -165,6 +166,8 @@ function PlaceBody({ id, fromParam }: { id: string | null; fromParam: string | n
             </p>
           </section>
         ) : null}
+
+        <ArGuidance pack={pack} poi={poi} prefs={prefs} />
 
         <p className="flex items-center gap-2 pb-2 text-sm text-muted">
           Data status <StatusPill status={poi.provenance.status} />
