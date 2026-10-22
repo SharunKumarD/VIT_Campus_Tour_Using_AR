@@ -1,26 +1,51 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * VIT ImmersiveAR design tokens.
+ * Visual language: campus direction signage — a green signboard, white
+ * lettering, road-marking amber for the route, accessibility blue for
+ * step-free states. System fonts only (Roboto on Android) so the app needs
+ * no network and no font files.
+ */
+@theme {
+  --color-sign: #0e5a3c;
+  --color-sign-dark: #0a4430;
+  --color-paper: #f3f5f1;
+  --color-card: #ffffff;
+  --color-ink: #15211b;
+  --color-muted: #56665d;
+  --color-line: #d4ddd6;
+  --color-route: #f5b301;
+  --color-route-ink: #5c4300;
+  --color-access: #1f5fd6;
+  --color-access-soft: #e6eefc;
+  --color-demo: #7a4f00;
+  --color-demo-soft: #fff1cc;
+  --color-danger: #a8261b;
+  --color-danger-soft: #fdeceb;
+
+  --font-sans: system-ui, Roboto, "Segoe UI", "Noto Sans", Arial, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-access);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
 }
