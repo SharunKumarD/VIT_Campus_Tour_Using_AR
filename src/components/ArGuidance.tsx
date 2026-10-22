@@ -15,6 +15,8 @@ import { findRouteToPoi, formatDistance, REASON_LABEL } from "@/lib/routing/inde
 import { formatDuration, profileFromPrefs, type Prefs } from "@/lib/settings/prefs.ts";
 import { ArError, checkArAvailability, isAndroidApp, startArNavigation, type NavSession } from "@/lib/native/ar.ts";
 import { buildNavPayload, checkpointName } from "@/lib/native/nav-payload.ts";
+import type { SessionRecord } from "@/lib/research/session-log.ts";
+import { saveSession } from "@/lib/research/sessions.ts";
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -71,10 +73,10 @@ export function ArGuidance({ pack, poi, prefs }: { pack: CampusPack; poi: Poi; p
     setError(null);
     setCopied("");
     try {
-      const payload = buildNavPayload(pack, route, cp, poi.name);
+      const payload = buildNavPayload(pack, route, cp, poi.name, prefs.alwaysOnAr ? "always" : "gated");
       const s = await startArNavigation(payload);
       setSession(s);
-      const log = {
+      const log: SessionRecord = {
         app: "VIT ImmersiveAR",
         recordedAt: new Date().toISOString(),
         dataVersion: pack.version,
@@ -90,6 +92,7 @@ export function ArGuidance({ pack, poi, prefs }: { pack: CampusPack; poi: Poi; p
       } catch {
         // Storage unavailable: the result is still shown below.
       }
+      await saveSession(log).catch(() => undefined); // also kept in Research sessions
     } catch (e) {
       setError(e instanceof ArError ? e : new ArError("UNKNOWN", String(e)));
     } finally {
@@ -110,6 +113,11 @@ export function ArGuidance({ pack, poi, prefs }: { pack: CampusPack; poi: Poi; p
   return (
     <section aria-labelledby="ar-guide" className="space-y-3 rounded-xl border-2 border-sign bg-card p-4">
       <h2 id="ar-guide" className="text-lg font-bold">Guide me with AR</h2>
+      {prefs.alwaysOnAr ? (
+        <p className="rounded-lg bg-demo-soft px-3 py-2 text-xs text-demo">
+          Study mode: arrows stay visible even when positioning is unreliable. Turn off in Research sessions.
+        </p>
+      ) : null}
 
       {arReady === false ? (
         <p className="text-sm leading-relaxed text-muted">
@@ -180,9 +188,14 @@ export function ArGuidance({ pack, poi, prefs }: { pack: CampusPack; poi: Poi; p
                 <li key={m}>{MODE_LABEL[m] ?? m}: {Math.round(s)} s</li>
               ))}
           </ul>
-          <button type="button" onClick={copyLog} className="mt-3 min-h-11 font-semibold text-sign underline underline-offset-4">
-            Copy session log
-          </button>
+          <div className="mt-3 flex flex-wrap gap-x-5">
+            <button type="button" onClick={copyLog} className="min-h-11 font-semibold text-sign underline underline-offset-4">
+              Copy session log
+            </button>
+            <Link href="/research/" className="inline-flex min-h-11 items-center font-semibold text-sign underline underline-offset-4">
+              All sessions
+            </Link>
+          </div>
           {copied ? <p className="mt-1 text-xs text-muted">{copied}</p> : null}
         </div>
       ) : null}

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, type FormEvent } from "react";
 import { AccessIcon, CategoryIcon, ChevronIcon, SearchIcon } from "@/components/icons.tsx";
 import { DataNotice } from "@/components/DataNotice.tsx";
-import { DEFAULT_START_POI_ID, getCampusPack, getPoi } from "@/lib/campus/store.ts";
+import { DEFAULT_START_POI_ID, useCampusPack, getPoi } from "@/lib/campus/store.ts";
 import { findRouteToPoi, formatDistance } from "@/lib/routing/index.ts";
 import { formatDuration, profileFromPrefs } from "@/lib/settings/prefs.ts";
 import { usePrefs } from "@/lib/settings/usePrefs.ts";
@@ -16,7 +16,7 @@ export default function HomePage() {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [prefs] = usePrefs();
-  const pack = getCampusPack();
+  const pack = useCampusPack();
   const start = getPoi(DEFAULT_START_POI_ID)!;
 
   // A signboard of destinations with real computed walking distances.

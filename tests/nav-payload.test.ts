@@ -25,6 +25,7 @@ test("payload carries the route, instructions and on-route checkpoints", () => {
   const corr = p.checkpoints.find((c) => c.id === "cp-a-corr-1")!;
   assert.equal(corr.level, 1);
   assert.equal(corr.name, "first-floor corridor");
+  assert.equal(corr.marker, "VITIAR-CP-0002");
 });
 
 test("checkpoints off the route are not sent", () => {
@@ -45,6 +46,11 @@ test("refuses a route that does not start at the checkpoint", () => {
 test("payload is plain JSON (survives the native bridge)", () => {
   const p = buildNavPayload(PACK, route("gate", "lib-hall"), cp("cp-gate"), "Library");
   assert.deepEqual(JSON.parse(JSON.stringify(p)), p);
+});
+
+test("guidance policy defaults to gated and can be set for the study baseline", () => {
+  assert.equal(buildNavPayload(PACK, route("gate", "lib-hall"), cp("cp-gate"), "L").policy, "gated");
+  assert.equal(buildNavPayload(PACK, route("gate", "lib-hall"), cp("cp-gate"), "L", "always").policy, "always");
 });
 
 test("checkpoint names come from landmarks", () => {

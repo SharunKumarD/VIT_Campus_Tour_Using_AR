@@ -20,11 +20,14 @@ final class NavPayload {
 
     static final class Checkpoint {
         final String id, nodeId, name;
+        /** Text in the printed QR code ("" if the marker has no code). */
+        final String marker;
         final double x, y, facingDeg;
         final int level;
 
-        Checkpoint(String id, String nodeId, String name, double x, double y, int level, double facingDeg) {
+        Checkpoint(String id, String nodeId, String name, String marker, double x, double y, int level, double facingDeg) {
             this.id = id;
+            this.marker = marker;
             this.nodeId = nodeId;
             this.name = name;
             this.x = x;
@@ -35,14 +38,17 @@ final class NavPayload {
     }
 
     final String destinationName;
+    /** "gated" (normal) or "always" (study baseline: arrows never hidden for reliability). */
+    final boolean alwaysShowArrows;
     final List<RouteGuide.Point> points;
     final List<RouteGuide.Instruction> instructions;
     final List<Checkpoint> checkpoints;
     final Checkpoint start;
 
-    private NavPayload(String destinationName, List<RouteGuide.Point> points, List<RouteGuide.Instruction> instructions,
-                       List<Checkpoint> checkpoints, Checkpoint start) {
+    private NavPayload(String destinationName, boolean alwaysShowArrows, List<RouteGuide.Point> points,
+                       List<RouteGuide.Instruction> instructions, List<Checkpoint> checkpoints, Checkpoint start) {
         this.destinationName = destinationName;
+        this.alwaysShowArrows = alwaysShowArrows;
         this.points = points;
         this.instructions = instructions;
         this.checkpoints = checkpoints;
@@ -85,7 +91,7 @@ final class NavPayload {
                 if (!ids.contains(nodeId)) continue; // only checkpoints on this route are useful
                 double facing = finite(c.getDouble("facingDeg"), "facingDeg");
                 if (facing < 0 || facing >= 360) throw new IllegalArgumentException("Checkpoint facing must be 0-359 degrees");
-                Checkpoint cp = new Checkpoint(c.getString("id"), nodeId, c.getString("name"),
+                Checkpoint cp = new Checkpoint(c.getString("id"), nodeId, c.getString("name"), c.optString("marker", ""),
                     finite(c.getDouble("x"), "x"), finite(c.getDouble("y"), "y"), c.getInt("level"), facing);
                 checkpoints.add(cp);
                 if (cp.id.equals(startId)) start = cp;
@@ -94,6 +100,7 @@ final class NavPayload {
             if (!start.nodeId.equals(points.get(0).nodeId)) throw new IllegalArgumentException("The route must start at the starting checkpoint");
 
             return new NavPayload(o.optString("destinationName", "your destination"),
+                "always".equals(o.optString("policy", "gated")),
                 Collections.unmodifiableList(points), instructions, Collections.unmodifiableList(checkpoints), start);
         } catch (JSONException e) {
             throw new IllegalArgumentException("Route data is malformed: " + e.getMessage());

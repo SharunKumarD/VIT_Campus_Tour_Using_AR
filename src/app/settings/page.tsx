@@ -5,7 +5,8 @@ import { useState } from "react";
 import { ChevronIcon } from "@/components/icons.tsx";
 import { StatusPill } from "@/components/DataNotice.tsx";
 import { PageHeader } from "@/components/PageHeader.tsx";
-import { getCampusPack } from "@/lib/campus/store.ts";
+import { setDemoOrigin, useCampusState } from "@/lib/campus/store.ts";
+import { getOnePosition } from "@/lib/location/useLocation.ts";
 import type { Prefs } from "@/lib/settings/prefs.ts";
 import { usePrefs } from "@/lib/settings/usePrefs.ts";
 
@@ -23,7 +24,28 @@ const OPTIONS: { key: keyof Prefs; title: string; detail: string }[] = [
 export default function SettingsPage() {
   const [prefs, setPrefs, resetPrefs] = usePrefs();
   const [resetDone, setResetDone] = useState(false);
-  const pack = getCampusPack();
+  const campus = useCampusState();
+  const pack = campus.pack;
+  const [locBusy, setLocBusy] = useState(false);
+  const [locNote, setLocNote] = useState("");
+
+  const moveDemoHere = async () => {
+    setLocBusy(true);
+    setLocNote("");
+    try {
+      const fix = await getOnePosition();
+      if (fix.accuracyM > 25) {
+        setLocNote(`Location is only accurate to about ${Math.round(fix.accuracyM)} m. Move into the open and try again.`);
+        return;
+      }
+      setDemoOrigin({ lat: fix.lat, lng: fix.lng });
+      setLocNote(`Demo map placed here (accuracy about ${Math.round(fix.accuracyM)} m). The demo main gate is now where you are standing; its paths run north from here.`);
+    } catch (e) {
+      setLocNote((e as Error).message);
+    } finally {
+      setLocBusy(false);
+    }
+  };
   const published = new Date(pack.publishedAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
 
   return (
@@ -67,6 +89,61 @@ export default function SettingsPage() {
           </Link>
         </section>
 
+        <section aria-labelledby="loc-h">
+          <h2 id="loc-h" className="mb-2 text-lg font-bold">Location</h2>
+          <p className="text-sm leading-relaxed">
+            Location is used only while you have the map or directions open with "My location" chosen. It stays on this
+            phone and is never stored or sent.
+          </p>
+          {pack.isDemo ? (
+            <div className="mt-3 space-y-2 rounded-xl border border-line bg-card p-4">
+              <p className="font-semibold">Test the demo map outdoors</p>
+              <p className="text-sm leading-relaxed text-muted">
+                The demo campus is invented. Place it where you are standing so its routes can be walked with GPS and AR.
+                Stand in an open area with space to the north.
+              </p>
+              <button
+                type="button"
+                onClick={moveDemoHere}
+                disabled={locBusy}
+                className="min-h-12 w-full rounded-xl bg-sign font-semibold text-white disabled:opacity-60"
+              >
+                {locBusy ? "Getting location…" : "Place demo map at my location"}
+              </button>
+              {campus.demoOrigin ? (
+                <button
+                  type="button"
+                  onClick={() => { setDemoOrigin(null); setLocNote("Demo map moved back to its default position."); }}
+                  className="min-h-11 w-full rounded-xl border-2 border-line font-semibold"
+                >
+                  Move demo map back
+                </button>
+              ) : null}
+              <p aria-live="polite" className="text-sm text-sign">{locNote}</p>
+            </div>
+          ) : null}
+        </section>
+
+        <section aria-labelledby="more-h">
+          <h2 id="more-h" className="mb-2 text-lg font-bold">Data and research</h2>
+          <ul className="overflow-hidden rounded-xl border border-line bg-card">
+            {[
+              ["/offline/", "Offline campus data", "Version, import a verified campus map"],
+              ["/research/", "Research sessions", "AR guidance logs saved on this phone"],
+            ].map(([href, title, detail]) => (
+              <li key={href} className="border-b border-line last:border-b-0">
+                <Link href={href} className="flex min-h-16 items-center gap-3 px-4 py-3">
+                  <span className="flex-1">
+                    <span className="block font-semibold">{title}</span>
+                    <span className="mt-0.5 block text-sm text-muted">{detail}</span>
+                  </span>
+                  <ChevronIcon className="h-5 w-5 text-muted" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+
         <section aria-labelledby="data-h">
           <h2 id="data-h" className="mb-2 text-lg font-bold">Campus data</h2>
           <dl className="overflow-hidden rounded-xl border border-line bg-card text-sm">
@@ -85,13 +162,15 @@ export default function SettingsPage() {
               <dd><StatusPill status={pack.isDemo ? "demo" : "verified"} /></dd>
             </div>
           </dl>
-          <p className="mt-2 text-sm text-muted">Stored inside the app. Routes are worked out on this phone and work without internet.</p>
+          <p className="mt-2 text-sm text-muted">
+            {campus.source === "imported" ? "Imported on this phone." : "Built into the app."} Routes are worked out on this phone and work without internet.
+          </p>
         </section>
 
         <section aria-labelledby="privacy-h">
           <h2 id="privacy-h" className="mb-2 text-lg font-bold">Privacy</h2>
           <p className="text-sm leading-relaxed">
-            This build stores only the settings above, on this phone. It does not use your location. The camera is used only while the AR test screen is open, and nothing is recorded or sent over the internet.
+            This build stores only the settings above, on this phone. Location and camera are used only while you are using them, and nothing is sent over the internet. AR session logs stay on this phone until you copy them.
           </p>
           <button
             type="button"

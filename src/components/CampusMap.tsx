@@ -21,6 +21,8 @@ interface Props {
   onSelectPoi?: (poiId: string) => void;
   /** Accessible description of what the map currently shows. */
   label: string;
+  /** Live position in the campus frame, with GPS accuracy radius. */
+  user?: { x: number; y: number; accuracyM: number } | null;
 }
 
 const shortName = (name: string) => name.replace(/^Demo /, "").replace(/\s*\(.*\)$/, "");
@@ -33,7 +35,7 @@ function edgeStyle(e: NavEdge): { stroke: string; dash?: string; width: number }
   return { stroke: "#c4cec7", width: 6 };
 }
 
-export function CampusMap({ pack, route, selectedPoiId, onSelectPoi, label }: Props) {
+export function CampusMap({ pack, route, selectedPoiId, onSelectPoi, label, user }: Props) {
   const nodes = useMemo(() => new Map(pack.nodes.map((n) => [n.id, n])), [pack]);
   const vp = useMemo(() => fitViewport(pack.nodes, 360, 34), [pack]);
 
@@ -144,6 +146,19 @@ export function CampusMap({ pack, route, selectedPoiId, onSelectPoi, label }: Pr
           <circle r={9} fill="var(--color-access)" stroke="#fff" strokeWidth={3} />
         </g>
       ) : null}
+
+      {user ? (() => {
+        const p = vp.project(user);
+        const inside = p.x >= 0 && p.x <= vp.width && p.y >= 0 && p.y <= vp.height;
+        if (!inside) return null;
+        const r = Math.min(user.accuracyM / vp.metresPerUnit, vp.width);
+        return (
+          <g aria-hidden>
+            <circle cx={p.x} cy={p.y} r={r} fill="var(--color-access)" fillOpacity={0.15} stroke="var(--color-access)" strokeOpacity={0.5} />
+            <circle cx={p.x} cy={p.y} r={7} fill="var(--color-access)" stroke="#fff" strokeWidth={3} />
+          </g>
+        );
+      })() : null}
 
       <g transform={`translate(${vp.width - 22} 22)`} aria-hidden>
         <circle r={13} fill="#fff" stroke="#c4cec7" />

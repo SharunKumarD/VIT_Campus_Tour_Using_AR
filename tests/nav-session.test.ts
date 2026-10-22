@@ -15,6 +15,8 @@ test("parses a full native session result", () => {
   assert.equal(s.modeSeconds.GUIDING, 250);
   assert.equal(s.events.length, 2);
   assert.equal(s.thresholds.lostAfterM, 80);
+  assert.equal(s.policy, "gated");
+  assert.equal(parseNavSession("ended", '{"policy":"always"}').policy, "always");
 });
 
 test("malformed or missing data gives safe defaults instead of crashing", () => {

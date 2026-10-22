@@ -16,6 +16,8 @@ export interface NavSession {
   modeSeconds: Record<string, number>;
   events: { t: number; type: string; detail: string }[];
   thresholds: Record<string, number>;
+  /** Guidance policy used: "gated" (normal) or "always" (study baseline). */
+  policy: "gated" | "always";
 }
 
 /** Parse the native session result defensively; unknown or missing fields get safe defaults. */
@@ -52,5 +54,6 @@ export function parseNavSession(outcome: string, json: string | null | undefined
     modeSeconds: rec("modeSeconds"),
     events,
     thresholds: rec("thresholds"),
+    policy: o.policy === "always" ? "always" : "gated",
   };
 }

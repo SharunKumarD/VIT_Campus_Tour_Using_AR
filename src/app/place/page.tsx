@@ -7,12 +7,18 @@ import { CampusMap, MapLegend } from "@/components/CampusMap.tsx";
 import { DataNotice, StatusPill } from "@/components/DataNotice.tsx";
 import { AccessIcon, CategoryIcon, MapIcon, SwapIcon } from "@/components/icons.tsx";
 import { PageHeader } from "@/components/PageHeader.tsx";
-import { DEFAULT_START_POI_ID, getCampusPack, getPoi } from "@/lib/campus/store.ts";
+import { DEFAULT_START_POI_ID, useCampusPack, getPoi } from "@/lib/campus/store.ts";
 import { CATEGORY_LABEL } from "@/lib/campus/search.ts";
 import { findRouteToPoi, formatDistance, REASON_LABEL } from "@/lib/routing/index.ts";
 import { formatDuration, profileFromPrefs } from "@/lib/settings/prefs.ts";
 import { usePrefs } from "@/lib/settings/usePrefs.ts";
 import { ArGuidance } from "@/components/ArGuidance.tsx";
+import { describeFix, locate } from "@/lib/location/position.ts";
+import { useLocation } from "@/lib/location/useLocation.ts";
+import { findRoute } from "@/lib/routing/index.ts";
+
+/** Special "From" value meaning live location. */
+const HERE = "__here__";
 
 function PlaceScreen() {
   const params = useSearchParams();
@@ -21,7 +27,7 @@ function PlaceScreen() {
 }
 
 function PlaceBody({ id, fromParam }: { id: string | null; fromParam: string | null }) {
-  const pack = getCampusPack();
+  const pack = useCampusPack();
   const poi = getPoi(id);
   const [prefs, setPrefs] = usePrefs();
 
@@ -31,12 +37,19 @@ function PlaceBody({ id, fromParam }: { id: string | null; fromParam: string | n
   );
   const initialFrom = getPoi(fromParam)?.id ?? (poi?.id === DEFAULT_START_POI_ID ? startOptions[0]?.id : DEFAULT_START_POI_ID);
   const [fromId, setFromId] = useState(initialFrom);
-  const from = getPoi(fromId);
+  const usingHere = fromId === HERE;
+  const from = usingHere ? undefined : getPoi(fromId);
+  const loc = useLocation(usingHere);
+  const located = useMemo(() => (loc.fix ? locate(pack, loc.fix) : null), [pack, loc.fix]);
+  // Snap to a route node only once the fix is good enough; keep it stable while it stays usable.
+  const hereNodeId = usingHere && located?.canStartHere ? located.nearest!.node.id : null;
 
-  const route = useMemo(
-    () => (poi && from ? findRouteToPoi(pack, from.nodeId, poi.id, profileFromPrefs(prefs)) : null),
-    [pack, poi, from, prefs],
-  );
+  const route = useMemo(() => {
+    if (!poi) return null;
+    const profile = profileFromPrefs(prefs);
+    if (usingHere) return hereNodeId ? findRoute(pack, hereNodeId, poi.nodeId, profile) : null;
+    return from ? findRouteToPoi(pack, from.nodeId, poi.id, profile) : null;
+  }, [pack, poi, from, prefs, usingHere, hereNodeId]);
 
   if (!poi) {
     return (
@@ -79,12 +92,13 @@ function PlaceBody({ id, fromParam }: { id: string | null; fromParam: string | n
                 onChange={(e) => setFromId(e.target.value)}
                 className="min-h-12 w-full rounded-lg border border-line bg-paper px-3 text-base"
               >
+                <option value={HERE}>My location (GPS)</option>
                 {startOptions.map((p) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
               <Link
-                href={`/place/?id=${fromId}&from=${poi.id}`}
+                href={usingHere ? `/place/?id=${poi.id}` : `/place/?id=${fromId}&from=${poi.id}`}
                 aria-label={`Reverse: directions from ${poi.name}`}
                 className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-line text-muted"
               >
@@ -92,6 +106,20 @@ function PlaceBody({ id, fromParam }: { id: string | null; fromParam: string | n
               </Link>
             </div>
           </div>
+
+          {usingHere ? (
+            <p aria-live="polite" className={`text-sm ${located?.canStartHere ? "text-muted" : "text-demo"}`}>
+              {loc.status === "starting" || (loc.status === "on" && !loc.fix)
+                ? "Finding your location…"
+                : loc.status === "denied" || loc.status === "unavailable"
+                  ? loc.message
+                  : located && loc.fix
+                    ? located.canStartHere
+                      ? `Starting from ${located.nearest!.node.landmark ?? "the nearest path"}, ${Math.round(located.nearest!.distanceM)} m away. ${describeFix(located, loc.fix.accuracyM)}`
+                      : describeFix(located, loc.fix.accuracyM)
+                    : ""}
+            </p>
+          ) : null}
 
           <label className="flex min-h-12 cursor-pointer items-center gap-3">
             <AccessIcon className={`h-6 w-6 ${prefs.stepFree ? "text-access" : "text-muted"}`} />
@@ -121,7 +149,7 @@ function PlaceBody({ id, fromParam }: { id: string | null; fromParam: string | n
             <DataNotice status={route.dataStatus} compact />
 
             <figure className="overflow-hidden rounded-xl border border-line bg-card">
-              <CampusMap pack={pack} route={route} label={`Map of the route from ${from?.name} to ${poi.name}`} />
+              <CampusMap pack={pack} route={route} label={`Map of the route from ${usingHere ? "your location" : from?.name} to ${poi.name}`} />
               <figcaption className="border-t border-line px-3 py-2"><MapLegend showRoute /></figcaption>
             </figure>
 
@@ -142,7 +170,7 @@ function PlaceBody({ id, fromParam }: { id: string | null; fromParam: string | n
             </section>
 
             <Link
-              href={`/map/?from=${fromId}&to=${poi.id}`}
+              href={usingHere ? `/map/?to=${poi.id}&here=1` : `/map/?from=${fromId}&to=${poi.id}`}
               className="flex min-h-12 items-center justify-center gap-2 rounded-xl border-2 border-sign font-semibold text-sign"
             >
               <MapIcon className="h-5 w-5" />

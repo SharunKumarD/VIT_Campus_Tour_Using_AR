@@ -5,6 +5,7 @@
 import { copyFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 
 const ARCORE_VERSION = "1.54.0";
+const ZXING_VERSION = "3.5.3";
 const APP = "android/app";
 const MANIFEST = `${APP}/src/main/AndroidManifest.xml`;
 const GRADLE = `${APP}/build.gradle`;
@@ -25,14 +26,19 @@ function edit(file, fn) {
   console.log(`✓ ${file}: ${msg}`);
 }
 
-// 1. ARCore library
+// 1. Native libraries: ARCore (AR) and ZXing core (reading QR markers). Each is checked separately.
+const DEPENDENCIES = [
+  ["com.google.ar:core", ARCORE_VERSION, "ARCore (Google Play Services for AR): native AR"],
+  ["com.google.zxing:core", ZXING_VERSION, "ZXing core: reads checkpoint QR markers (pure Java, Apache-2.0)"],
+];
 edit(GRADLE, (s) => {
-  if (s.includes("com.google.ar:core")) return [s, "ARCore dependency already present"];
   const i = s.search(/^dependencies\s*\{/m);
   if (i < 0) return "ERROR: no top-level dependencies { } block found";
   const brace = s.indexOf("{", i) + 1;
-  const line = `\n    // ARCore (Google Play Services for AR) — native AR for VIT ImmersiveAR\n    implementation "com.google.ar:core:${ARCORE_VERSION}"`;
-  return [s.slice(0, brace) + line + s.slice(brace), `added com.google.ar:core:${ARCORE_VERSION}`];
+  const missing = DEPENDENCIES.filter(([coord]) => !s.includes(coord));
+  if (missing.length === 0) return [s, "native libraries already present"];
+  const lines = missing.map(([coord, v, why]) => `\n    // ${why}\n    implementation "${coord}:${v}"`).join("");
+  return [s.slice(0, brace) + lines + s.slice(brace), `added ${missing.map(([c, v]) => `${c}:${v}`).join(", ")}`];
 });
 
 // 2. Manifest: camera permission, AR as OPTIONAL (app still installs on non-AR phones), AR screens.
@@ -53,6 +59,14 @@ edit(MANIFEST, (s) => {
       `    <uses-feature android:name="android.hardware.camera" android:required="false" />\n` +
       `    <uses-feature android:glEsVersion="0x00020000" android:required="true" />\n`);
     added.push("CAMERA permission");
+  }
+  if (!out.includes("android.permission.ACCESS_FINE_LOCATION")) {
+    beforeManifestEnd(
+      `    <!-- Location: only while the map or "My location" is in use; never in the background -->\n` +
+      `    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n` +
+      `    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n` +
+      `    <uses-feature android:name="android.hardware.location.gps" android:required="false" />\n`);
+    added.push("location permissions");
   }
   if (!out.includes('android:name="com.google.ar.core"')) {
     beforeAppEnd(`        <meta-data android:name="com.google.ar.core" android:value="optional" />\n`);
@@ -99,8 +113,23 @@ public class MainActivity extends BridgeActivity {
   return [out, "registered ImmersiveArPlugin"];
 });
 
+// 4. Never commit signing keys.
+{
+  const file = ".gitignore";
+  const want = ["*.jks", "*.keystore", "keystore.properties"];
+  let s = existsSync(file) ? readFileSync(file, "utf8") : "";
+  const missing = want.filter((w) => !s.split(/\r?\n/).includes(w));
+  if (missing.length) {
+    s += (s.endsWith("\n") || s === "" ? "" : "\n") + "\n# Android signing keys (never commit)\n" + missing.join("\n") + "\n";
+    writeFileSync(file, s);
+    console.log(`✓ ${file}: added ${missing.join(", ")}`);
+  } else {
+    console.log(`✓ ${file}: signing keys already ignored`);
+  }
+}
+
 if (failed) {
   console.error("\nSome steps failed. Nothing else was changed. Send the message above to Claude.");
   process.exit(1);
 }
-console.log("\nDone. Next: npm install @capacitor/app@^8, then npm run build and npx cap sync android");
+console.log("\nDone. Next: npm install @capacitor/geolocation@^8, then npm run build and npx cap sync android");

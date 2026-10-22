@@ -6,13 +6,13 @@ import { Suspense, useMemo, useState } from "react";
 import { CategoryIcon, ChevronIcon, SearchIcon } from "@/components/icons.tsx";
 import { PageHeader } from "@/components/PageHeader.tsx";
 import { StatusPill } from "@/components/DataNotice.tsx";
-import { getCampusPack } from "@/lib/campus/store.ts";
+import { useCampusPack } from "@/lib/campus/store.ts";
 import { CATEGORY_LABEL, categoriesIn, searchPois } from "@/lib/campus/search.ts";
 import type { PoiCategory } from "@/lib/campus/types.ts";
 
 function PlacesScreen() {
   const params = useSearchParams();
-  const pack = getCampusPack();
+  const pack = useCampusPack();
   const [query, setQuery] = useState(params.get("q") ?? "");
   const [category, setCategory] = useState<PoiCategory | undefined>(undefined);
   const categories = useMemo(() => categoriesIn(pack), [pack]);

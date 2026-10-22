@@ -14,6 +14,11 @@ export interface Prefs {
   preferCovered: boolean;
   /** Slower walking speed for time estimates. */
   slowerPace: boolean;
+  /**
+   * Research comparison condition only: keep AR arrows visible even when
+   * positioning is unreliable ("always-on AR" baseline). Off by default.
+   */
+  alwaysOnAr: boolean;
 }
 
 export const DEFAULT_PREFS: Prefs = {
@@ -21,6 +26,7 @@ export const DEFAULT_PREFS: Prefs = {
   avoidUnpaved: false,
   preferCovered: false,
   slowerPace: false,
+  alwaysOnAr: false,
 };
 
 export const PREFS_STORAGE_KEY = "vitiar.prefs.v1";
@@ -42,6 +48,7 @@ export function parsePrefs(raw: unknown): Prefs {
     avoidUnpaved: bool("avoidUnpaved"),
     preferCovered: bool("preferCovered"),
     slowerPace: bool("slowerPace"),
+    alwaysOnAr: bool("alwaysOnAr"),
   };
 }
 

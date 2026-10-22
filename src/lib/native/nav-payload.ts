@@ -12,13 +12,17 @@ import type { RouteSuccess } from "../routing/route.ts";
 
 export const NAV_PAYLOAD_VERSION = 1;
 
+/** "gated": hide arrows when positioning is unreliable (the app's design). "always": study baseline. */
+export type GuidancePolicy = "gated" | "always";
+
 export interface NavPayload {
   version: typeof NAV_PAYLOAD_VERSION;
+  policy: GuidancePolicy;
   destinationName: string;
   startCheckpointId: string;
   nodes: { id: string; x: number; y: number; level: number; landmark: string }[];
   instructions: { text: string; atNodeId: string; type: string }[];
-  checkpoints: { id: string; nodeId: string; name: string; x: number; y: number; level: number; facingDeg: number }[];
+  checkpoints: { id: string; nodeId: string; name: string; marker: string; x: number; y: number; level: number; facingDeg: number }[];
 }
 
 /** Human name for a checkpoint: its node's landmark, else its id. */
@@ -31,6 +35,7 @@ export function buildNavPayload(
   route: RouteSuccess,
   start: Checkpoint,
   destinationName: string,
+  policy: GuidancePolicy = "gated",
 ): NavPayload {
   if (route.nodeIds[0] !== start.nodeId) {
     throw new Error("AR guidance must start at the chosen checkpoint");
@@ -39,6 +44,7 @@ export function buildNavPayload(
   const onRoute = new Set(route.nodeIds);
   return {
     version: NAV_PAYLOAD_VERSION,
+    policy,
     destinationName: destinationName.replace(/^Demo /, ""),
     startCheckpointId: start.id,
     nodes: route.nodeIds.map((id) => {
@@ -50,7 +56,7 @@ export function buildNavPayload(
       .filter((c) => onRoute.has(c.nodeId))
       .map((c) => {
         const n = byId.get(c.nodeId)!;
-        return { id: c.id, nodeId: c.nodeId, name: checkpointName(pack, c), x: n.x, y: n.y, level: c.level, facingDeg: c.facingDeg };
+        return { id: c.id, nodeId: c.nodeId, name: checkpointName(pack, c), marker: c.markerPayload, x: n.x, y: n.y, level: c.level, facingDeg: c.facingDeg };
       }),
   };
 }

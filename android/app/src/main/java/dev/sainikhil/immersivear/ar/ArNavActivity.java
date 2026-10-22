@@ -82,6 +82,7 @@ public class ArNavActivity extends AppCompatActivity implements GLSurfaceView.Re
 
     private NavPayload payload;
     private RouteGuide guide;
+    private QrScanner qr;
 
     private volatile Session session;
     private boolean installRequested;
@@ -120,6 +121,7 @@ public class ArNavActivity extends AppCompatActivity implements GLSurfaceView.Re
         startedMs = SystemClock.elapsedRealtime();
         guide.begin(startedMs);
         alignTarget = payload.start;
+        qr = new QrScanner(this::onQr);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         buildUi();
 
@@ -192,6 +194,20 @@ public class ArNavActivity extends AppCompatActivity implements GLSurfaceView.Re
             return;
         }
         chooseCheckpoint();
+    }
+
+    /** A QR code was read. Only exact matches with this route's markers are used. */
+    private void onQr(String text) {
+        for (NavPayload.Checkpoint c : payload.checkpoints) {
+            if (!c.marker.isEmpty() && c.marker.equals(text)) {
+                if (alignTarget != c) {
+                    alignTarget = c;
+                    transientNote = "Marker found: " + c.name + ". Stand at the tail of its arrow, face where it points, then tap Align here.";
+                }
+                return;
+            }
+        }
+        if (text.startsWith("VITIAR-")) transientNote = "That marker is not on this route.";
     }
 
     private void chooseCheckpoint() {
@@ -276,6 +292,7 @@ public class ArNavActivity extends AppCompatActivity implements GLSurfaceView.Re
 
     @Override
     protected void onDestroy() {
+        if (qr != null) qr.close();
         if (session != null) {
             session.close();
             session = null;
@@ -346,6 +363,12 @@ public class ArNavActivity extends AppCompatActivity implements GLSurfaceView.Re
             lastArZ = cam.tz();
         }
 
+        RouteGuide.Mode modeNow = guide.getMode();
+        if (qr != null && (alignTarget != null || modeNow == RouteGuide.Mode.LOST
+            || modeNow == RouteGuide.Mode.NEED_REALIGN || modeNow == RouteGuide.Mode.DEGRADED)) {
+            qr.offer(frame, now);
+        }
+
         if (alignRequested) {
             alignRequested = false;
             tryAlign(s, camera, now);
@@ -363,7 +386,10 @@ public class ArNavActivity extends AppCompatActivity implements GLSurfaceView.Re
             nextLevel = guide.levelAfterCurrentSpan();
 
             RouteGuide.Mode m = guide.getMode();
-            if (tracking && (m == RouteGuide.Mode.GUIDING || m == RouteGuide.Mode.DEGRADED)) {
+            boolean show = m == RouteGuide.Mode.GUIDING || m == RouteGuide.Mode.DEGRADED
+                // Study baseline only: keep arrows even when the position is judged unreliable.
+                || (payload.alwaysShowArrows && m == RouteGuide.Mode.LOST);
+            if (tracking && show) {
                 camera.getProjectionMatrix(projection, 0, 0.05f, 100f);
                 camera.getViewMatrix(view, 0);
                 drawRouteArrows(m == RouteGuide.Mode.DEGRADED);
@@ -492,8 +518,9 @@ public class ArNavActivity extends AppCompatActivity implements GLSurfaceView.Re
     }
 
     private String alignPrompt(NavPayload.Checkpoint cp) {
-        return "Stand on the marker at " + cp.name + ". Face " + compass(cp.facingDeg)
-            + " (the marker's arrow), hold the phone upright, then tap Align here.";
+        return "Stand at the tail of the arrow on the marker at " + cp.name + ", face where it points ("
+            + compass(cp.facingDeg) + "), hold the phone upright, then tap Align here."
+            + (cp.marker.isEmpty() ? "" : " Pointing the camera at a marker's QR code selects it.");
     }
 
     private void render(String b, String s, String p) {
@@ -553,6 +580,7 @@ public class ArNavActivity extends AppCompatActivity implements GLSurfaceView.Re
             guide.close(now);
             JSONObject o = new JSONObject();
             o.put("outcome", outcome);
+            o.put("policy", payload.alwaysShowArrows ? "always" : "gated");
             o.put("durationS", (now - startedMs) / 1000.0);
             o.put("walkedM", Math.round(walkedM * 10) / 10.0);
             o.put("remainingM", Math.round(guide.getRemainingM() * 10) / 10.0);
