@@ -17,10 +17,10 @@ export default function HomePage() {
   const [query, setQuery] = useState("");
   const [prefs] = usePrefs();
   const pack = useCampusPack();
-  const start = getPoi(DEFAULT_START_POI_ID)!;
+  const start = getPoi(DEFAULT_START_POI_ID) ?? pack.pois.find((p) => p.category === "entrance") ?? pack.pois[0];
 
-  // A signboard of destinations with real computed walking distances.
   const rows = useMemo(() => {
+    if (!start) return [];
     const profile = profileFromPrefs(prefs);
     return pack.pois
       .filter((p) => p.id !== start.id)
@@ -40,6 +40,15 @@ export default function HomePage() {
 
   return (
     <div className="space-y-5 px-4 pt-4">
+      <Link
+        href="/landmarks/"
+        className="block rounded-3xl bg-gradient-to-br from-[#3b4fd8] to-[#7b3fe4] p-5 text-white shadow-lg"
+      >
+        <span className="inline-block rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">VIT Vellore</span>
+        <span className="mt-3 block text-2xl font-extrabold leading-tight">Explore the campus</span>
+        <span className="mt-1 block text-sm text-white/85">SJT, TT, MGR, PRP, library and hostels: guidance from where you stand.</span>
+        <span className="mt-4 flex min-h-12 items-center justify-center rounded-xl bg-white font-semibold text-[#2a2f8f]">Open campus landmarks</span>
+      </Link>
       <section aria-labelledby="where-to" className="rounded-2xl bg-sign p-2 text-white shadow-sm">
         <div className="rounded-xl border-2 border-white/90 px-4 pb-3 pt-4">
           <p className="text-sm font-semibold text-white/80">VIT ImmersiveAR</p>
@@ -57,14 +66,14 @@ export default function HomePage() {
                 enterKeyHint="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Library, lab, canteen…"
+                placeholder="Library, lab, canteen..."
                 className="min-h-12 w-full bg-transparent text-base outline-none placeholder:text-muted"
               />
             </div>
           </form>
 
           <p className="mt-5 text-xs font-semibold text-white/75">
-            Walking from {shortName(start.name)}
+            Walking from {start ? shortName(start.name) : "-"}
             {prefs.stepFree ? ", step-free" : ""}
           </p>
           <ul className="mt-1 divide-y divide-white/20">
@@ -107,14 +116,6 @@ export default function HomePage() {
         </span>
         <ChevronIcon className="h-5 w-5 text-muted" />
       </Link>
-
-      <section aria-labelledby="coming" className="rounded-xl border border-dashed border-line px-4 py-3">
-        <h2 id="coming" className="font-semibold">Not in this build yet</h2>
-        <p className="mt-1 text-sm leading-relaxed text-muted">
-          Live location, QR scanning of markers and offline map downloads are being built next. AR guidance already
-          works from a demo marker: open a place and use Guide me with AR. Routes start from {shortName(start.name)} or a place you choose.
-        </p>
-      </section>
     </div>
   );
 }
