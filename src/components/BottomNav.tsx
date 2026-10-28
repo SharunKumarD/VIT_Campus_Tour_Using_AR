@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HomeIcon, MapIcon, SearchIcon, SettingsIcon } from "./icons.tsx";
+import { BuildingIcon, HomeIcon, MapIcon, SearchIcon, SettingsIcon } from "./icons.tsx";
 
 const TABS = [
   { href: "/", label: "Home", Icon: HomeIcon, match: (p: string) => p === "/" },
+  { href: "/landmarks/", label: "Campus", Icon: BuildingIcon, match: (p: string) => p.startsWith("/landmark") },
   { href: "/places/", label: "Places", Icon: SearchIcon, match: (p: string) => p.startsWith("/places") || p.startsWith("/place") },
   { href: "/map/", label: "Map", Icon: MapIcon, match: (p: string) => p.startsWith("/map") },
   { href: "/settings/", label: "Settings", Icon: SettingsIcon, match: (p: string) => p.startsWith("/settings") },

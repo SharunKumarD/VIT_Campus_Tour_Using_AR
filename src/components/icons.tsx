@@ -36,6 +36,9 @@ export const MapIcon = (p: IconProps) => (
 export const SettingsIcon = (p: IconProps) => (
   <Svg {...p}><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" /></Svg>
 );
+export const BuildingIcon = (p: IconProps) => (
+  <Svg {...p}><path d="M4 21V5l8-3 8 3v16" /><path d="M9 21v-4h6v4M8 8h2M14 8h2M8 12h2M14 12h2" /></Svg>
+);
 export const ChevronIcon = (p: IconProps) => (
   <Svg {...p}><path d="M9 6l6 6-6 6" /></Svg>
 );

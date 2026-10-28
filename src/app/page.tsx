@@ -19,6 +19,7 @@ export default function HomePage() {
   const pack = useCampusPack();
   const start = getPoi(DEFAULT_START_POI_ID) ?? pack.pois.find((p) => p.category === "entrance") ?? pack.pois[0];
 
+  // A signboard of destinations with real computed walking distances.
   const rows = useMemo(() => {
     if (!start) return [];
     const profile = profileFromPrefs(prefs);
@@ -66,14 +67,14 @@ export default function HomePage() {
                 enterKeyHint="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Library, lab, canteen..."
+                placeholder="Library, lab, canteen…"
                 className="min-h-12 w-full bg-transparent text-base outline-none placeholder:text-muted"
               />
             </div>
           </form>
 
           <p className="mt-5 text-xs font-semibold text-white/75">
-            Walking from {start ? shortName(start.name) : "-"}
+            Walking from {start ? shortName(start.name) : "—"}
             {prefs.stepFree ? ", step-free" : ""}
           </p>
           <ul className="mt-1 divide-y divide-white/20">
@@ -116,6 +117,14 @@ export default function HomePage() {
         </span>
         <ChevronIcon className="h-5 w-5 text-muted" />
       </Link>
+
+      <section aria-labelledby="coming" className="rounded-xl border border-dashed border-line px-4 py-3">
+        <h2 id="coming" className="font-semibold">Not in this build yet</h2>
+        <p className="mt-1 text-sm leading-relaxed text-muted">
+          Live location, QR scanning of markers and offline map downloads are being built next. AR guidance already
+          works from a demo marker: open a place and use Guide me with AR. Routes start from a place you choose.
+        </p>
+      </section>
     </div>
   );
 }
