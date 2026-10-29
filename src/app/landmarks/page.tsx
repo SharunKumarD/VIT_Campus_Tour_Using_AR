@@ -117,9 +117,9 @@ function LandmarkCard({ l, dist, bearing }: { l: Landmark; dist: number | null; 
   return (
     <article className="overflow-hidden rounded-2xl bg-[#131a2e] shadow">
       <div className="relative h-40 bg-gradient-to-br from-[#1d2a55] to-[#2b1d55]">
-        {l.data?.photo ? (
+        {l.data?.photo || l.image ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={l.data.photo} alt={`Photo of ${l.name}`} className="h-full w-full object-cover" />
+          <img src={l.data?.photo ?? l.image} alt={`Photo of ${l.name}`} className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full flex-col items-center justify-center text-white/50">
             <span className="text-4xl font-extrabold">{l.short}</span>

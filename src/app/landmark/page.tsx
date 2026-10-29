@@ -6,6 +6,8 @@ import { Suspense, useRef, useState, type ChangeEvent } from "react";
 import { arrivalRadiusM, bearingDeg, compassWord, distanceM, formatMetres, relativeBearing, unwrapRotation } from "@/lib/landmarks/geo.ts";
 import { clearLandmark, KIND_LABEL, resizePhoto, saveLocation, savePhoto, useLandmarks } from "@/lib/landmarks/store.ts";
 import { useCompass } from "@/lib/landmarks/useCompass.ts";
+import { buildOutdoorPayload } from "@/lib/landmarks/outdoor-ar.ts";
+import { ArError, isAndroidApp, startArNavigation } from "@/lib/native/ar.ts";
 import { getOnePosition, useLocation } from "@/lib/location/useLocation.ts";
 
 function LandmarkScreen() {
@@ -17,6 +19,7 @@ function LandmarkBody({ id, startGuide }: { id: string | null; startGuide: boole
   const list = useLandmarks();
   const l = list.find((x) => x.id === id);
   const [guiding, setGuiding] = useState(startGuide);
+  const [arPrep, setArPrep] = useState(false);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
@@ -63,9 +66,9 @@ function LandmarkBody({ id, startGuide }: { id: string | null; startGuide: boole
   return (
     <div className="min-h-dvh bg-[#0b1020] pb-6 text-white">
       <div className="relative h-56 bg-gradient-to-br from-[#1d2a55] to-[#2b1d55]">
-        {l.data?.photo ? (
+        {l.data?.photo || l.image ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={l.data.photo} alt={`Photo of ${l.name}`} className="h-full w-full object-cover" />
+          <img src={l.data?.photo ?? l.image} alt={`Photo of ${l.name}`} className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full items-center justify-center text-5xl font-extrabold text-white/40">{l.short}</div>
         )}
@@ -78,7 +81,9 @@ function LandmarkBody({ id, startGuide }: { id: string | null; startGuide: boole
         <p className="text-sm font-semibold text-[#8fa8ff]">{KIND_LABEL[l.kind]}</p>
         <h1 className="text-2xl font-extrabold">{l.name}</h1>
 
-        {guiding && l.data ? (
+        {arPrep && l.data ? (
+          <OutdoorAr target={l.data} name={l.name} onClose={() => setArPrep(false)} />
+        ) : guiding && l.data ? (
           <Guide target={l.data} name={l.name} minArriveM={l.dataSource === "builtin" ? 35 : 0} onStop={() => setGuiding(false)} />
         ) : (
           <>
@@ -96,9 +101,14 @@ function LandmarkBody({ id, startGuide }: { id: string | null; startGuide: boole
 
             <div className="mt-4 grid gap-2">
               {l.data ? (
-                <button type="button" onClick={() => setGuiding(true)} className="min-h-14 rounded-xl bg-[#3b6cff] text-lg font-bold">
-                  Guide me from here
-                </button>
+                <>
+                  <button type="button" onClick={() => setArPrep(true)} className="min-h-14 rounded-xl bg-[#3b6cff] text-lg font-bold">
+                    Guide me with AR camera
+                  </button>
+                  <button type="button" onClick={() => setGuiding(true)} className="min-h-12 rounded-xl bg-white/10 font-semibold">
+                    Compass arrow (no camera)
+                  </button>
+                </>
               ) : null}
               <button type="button" disabled={busy} onClick={saveHere} className="min-h-12 rounded-xl bg-white/10 font-semibold disabled:opacity-50">
                 {l.data ? "Update location: I'm here now" : "I'm here — save location"}
@@ -201,6 +211,78 @@ function Guide({ target, name, minArriveM, onStop }: { target: { lat: number; ln
       )}
       <button type="button" onClick={onStop} className="mt-5 min-h-12 w-full rounded-xl bg-white/10 font-semibold">
         End guidance
+      </button>
+    </section>
+  );
+}
+
+/**
+ * Outdoor AR: lock where the user is (GPS) and which way they face (compass,
+ * phone held flat), then open the ARCore guidance screen with a straight-line
+ * route to the building.
+ */
+function OutdoorAr({ target, name, onClose }: { target: { lat: number; lng: number }; name: string; onClose: () => void }) {
+  const loc = useLocation(true);
+  const heading = useCompass(true);
+  const [status, setStatus] = useState("");
+  const [running, setRunning] = useState(false);
+  const fix = loc.fix;
+  const dist = fix ? distanceM(fix, target) : null;
+  const bearing = fix ? bearingDeg(fix, target) : null;
+  const ready = !!fix && fix.accuracyM <= 30 && heading !== null && !running;
+
+  const start = async () => {
+    if (!fix || heading === null) return;
+    if (!isAndroidApp()) {
+      setStatus("AR camera guidance works in the Android app on an ARCore phone. Use the compass arrow here.");
+      return;
+    }
+    setRunning(true);
+    setStatus("Opening the AR camera…");
+    try {
+      const payload = buildOutdoorPayload(fix, target, heading, name);
+      const session = await startArNavigation(payload);
+      setStatus(session.outcome === "arrived" ? `You reached ${name}.` : "AR guidance ended.");
+    } catch (e) {
+      setStatus(e instanceof ArError ? e.message : (e as Error).message);
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <section className="mt-4 rounded-3xl bg-[#131a2e] p-5" aria-live="polite">
+      <h2 className="text-lg font-bold">AR camera guidance</h2>
+      <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-white/85">
+        <li>Stand outside in the open (GPS needs the sky).</li>
+        <li>Hold the phone <b>flat</b>, top pointing the way you are facing. Keep facing that way.</li>
+        <li>Tap <b>Open AR camera</b>, hold the phone upright, and when asked tap <b>Align here</b> without turning.</li>
+        <li>Follow the arrows on the ground. They point in a straight line, so keep to the footpaths.</li>
+      </ol>
+      <dl className="mt-4 grid grid-cols-2 gap-2 text-sm">
+        <div className="rounded-xl bg-white/5 p-3">
+          <dt className="text-white/60">GPS</dt>
+          <dd className="font-semibold">{fix ? `±${Math.round(fix.accuracyM)} m${fix.accuracyM > 30 ? " (too rough)" : ""}` : loc.message || "Finding…"}</dd>
+        </div>
+        <div className="rounded-xl bg-white/5 p-3">
+          <dt className="text-white/60">Facing</dt>
+          <dd className="font-semibold">{heading !== null ? `${Math.round(heading)}° ${compassWord(heading)}` : "Waiting for compass…"}</dd>
+        </div>
+        <div className="col-span-2 rounded-xl bg-white/5 p-3">
+          <dt className="text-white/60">{name}</dt>
+          <dd className="font-semibold">{dist !== null && bearing !== null ? `${formatMetres(dist)} towards the ${compassWord(bearing)}` : "—"}</dd>
+        </div>
+      </dl>
+      <button type="button" disabled={!ready} onClick={start} className="mt-4 min-h-14 w-full rounded-xl bg-[#3b6cff] text-lg font-bold disabled:opacity-40">
+        {running ? "AR running…" : "Open AR camera"}
+      </button>
+      {status ? <p className="mt-3 text-sm text-white/85">{status}</p> : null}
+      <p className="mt-3 text-xs text-white/55">
+        Approximate outdoor mode: the start point comes from GPS and the direction from the compass, so the arrow line can be off by
+        several metres. Indoors (PRP), use the room list and markers instead.
+      </p>
+      <button type="button" onClick={onClose} className="mt-3 min-h-12 w-full rounded-xl bg-white/10 font-semibold">
+        Back
       </button>
     </section>
   );

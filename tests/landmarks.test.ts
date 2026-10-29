@@ -44,3 +44,29 @@ test("compass words", () => {
   assert.equal(compassWord(225), "south-west");
   assert.equal(compassWord(359), "north");
 });
+
+import { buildOutdoorPayload } from "../src/lib/landmarks/outdoor-ar.ts";
+
+test("outdoor AR payload: straight line from GPS fix to the building, start faces the compass heading", () => {
+  const from = { lat: 12.9700, lng: 79.1590 };
+  const to = { lat: 12.9709, lng: 79.1590 }; // ~100 m north
+  const p = buildOutdoorPayload(from, to, 359.6, "SJT");
+  assert.equal(p.nodes[0].id, "here");
+  assert.equal(p.nodes.at(-1)!.id, "dest");
+  assert.equal(p.checkpoints[0].nodeId, "here");
+  assert.equal(p.checkpoints[0].facingDeg, 0);
+  assert.equal(p.policy, "always");
+  const last = p.nodes.at(-1)!;
+  assert.ok(Math.abs(last.x) < 0.5 && Math.abs(last.y - 100) < 1, JSON.stringify(last));
+  for (let i = 1; i < p.nodes.length; i++) {
+    const a = p.nodes[i - 1], b = p.nodes[i];
+    assert.ok(Math.hypot(b.x - a.x, b.y - a.y) <= 10.01);
+  }
+});
+
+test("outdoor AR payload refuses missing heading, arrival and very far targets", () => {
+  const a = { lat: 12.97, lng: 79.159 };
+  assert.throws(() => buildOutdoorPayload(a, { lat: 12.971, lng: 79.159 }, NaN, "X"));
+  assert.throws(() => buildOutdoorPayload(a, a, 0, "X"));
+  assert.throws(() => buildOutdoorPayload(a, { lat: 13.0, lng: 79.159 }, 0, "X"));
+});

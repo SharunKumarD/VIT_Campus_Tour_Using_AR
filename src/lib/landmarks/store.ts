@@ -24,6 +24,8 @@ export interface LandmarkDef {
   custom?: boolean;
   /** Built-in position from OpenStreetMap (or the student's own GPS survey). */
   seed?: { lat: number; lng: number; accuracyM: number; source: string };
+  /** Built-in photo shipped with the app (supplied by the project student). */
+  image?: string;
 }
 
 export interface LandmarkData {
@@ -53,12 +55,12 @@ const osm = (lat: number, lng: number, accuracyM = 25) => ({ lat, lng, accuracyM
  */
 export const PRESET_LANDMARKS: LandmarkDef[] = [
   { id: "main-gate", name: "VIT Main Gate", short: "Gate", kind: "entrance", seed: osm(12.968351, 79.155678, 15) },
-  { id: "sjt", name: "Silver Jubilee Tower (SJT)", short: "SJT", kind: "academic", seed: osm(12.970957, 79.163902) },
-  { id: "tt", name: "Technology Tower (TT)", short: "TT", kind: "academic", seed: osm(12.970606, 79.159531) },
-  { id: "smv", name: "Sir M. Visvesvaraya Block (SMV)", short: "SMV", kind: "academic", seed: osm(12.969234, 79.157731) },
+  { id: "sjt", name: "Silver Jubilee Tower (SJT)", short: "SJT", kind: "academic", seed: osm(12.970957, 79.163902), image: "/photos/sjt.jpg" },
+  { id: "tt", name: "Technology Tower (TT)", short: "TT", kind: "academic", seed: osm(12.970606, 79.159531), image: "/photos/tt.jpg" },
+  { id: "smv", name: "Sir Mokshagundam Visvesvaraya Block (SMV)", short: "SMV", kind: "academic", seed: osm(12.969234, 79.157731), image: "/photos/smv.jpg" },
   { id: "gdn", name: "G.D. Naidu Block (GDN)", short: "GDN", kind: "academic", seed: osm(12.969976, 79.154837) },
   { id: "mgb", name: "Mahatma Gandhi Block (MGB)", short: "MGB", kind: "academic", seed: osm(12.972115, 79.167848) },
-  { id: "prp", name: "Pearl Research Park (PRP) – E2 entrance", short: "PRP", kind: "academic", seed: { lat: 12.971579, lng: 79.165686, accuracyM: 10, source: "Student GPS survey at the E2 entrance, 2026-10-28" } },
+  { id: "prp", name: "Pearl Research Park (PRP) – E2 entrance", short: "PRP", kind: "academic", seed: { lat: 12.971579, lng: 79.165686, accuracyM: 10, source: "Student GPS survey at the E2 entrance, 2026-10-28" }, image: "/photos/prp.jpg" },
   { id: "mgr", name: "Dr. M.G.R. Block", short: "MGR", kind: "academic" },
   { id: "library", name: "Periyar Central Library", short: "Library", kind: "library", seed: osm(12.969332, 79.156848) },
   { id: "anna-audi", name: "Anna Auditorium", short: "Anna", kind: "other", seed: osm(12.969978, 79.155638) },
