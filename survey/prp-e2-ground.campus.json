@@ -1,0 +1,304 @@
+{
+  "schemaVersion": 1,
+  "version": "prp-e2-g-2026.10.28b",
+  "publishedAt": "2026-10-28T18:17:36.403Z",
+  "name": "PRP E2 ground floor (field survey, unverified)",
+  "isDemo": false,
+  "origin": {
+    "lat": 12.971579,
+    "lng": 79.165686
+  },
+  "buildings": [
+    {
+      "id": "prp",
+      "name": "PRP Block",
+      "levels": [
+        0
+      ],
+      "provenance": {
+        "status": "unverified",
+        "source": "Step-count field survey by project student, 2026-10-28 (not officially verified)"
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "id": "e2-out",
+      "kind": "entrance",
+      "x": 0,
+      "y": -3,
+      "level": 0,
+      "indoor": false,
+      "landmark": "foot of the E2 entrance steps",
+      "provenance": {
+        "status": "unverified",
+        "source": "Step-count field survey by project student, 2026-10-28 (not officially verified)"
+      }
+    },
+    {
+      "id": "e2",
+      "kind": "checkpoint",
+      "x": 0,
+      "y": 0,
+      "level": 0,
+      "indoor": true,
+      "buildingId": "prp",
+      "landmark": "inside the E2 entrance",
+      "provenance": {
+        "status": "unverified",
+        "source": "Step-count field survey by project student, 2026-10-28 (not officially verified)"
+      }
+    },
+    {
+      "id": "j1",
+      "kind": "intersection",
+      "x": 0,
+      "y": 10.5,
+      "level": 0,
+      "indoor": true,
+      "buildingId": "prp",
+      "landmark": "main corridor junction",
+      "provenance": {
+        "status": "unverified",
+        "source": "Step-count field survey by project student, 2026-10-28 (not officially verified)"
+      }
+    },
+    {
+      "id": "g33",
+      "kind": "destination",
+      "x": -7,
+      "y": 10.5,
+      "level": 0,
+      "indoor": true,
+      "buildingId": "prp",
+      "landmark": "classroom G33",
+      "provenance": {
+        "status": "unverified",
+        "source": "Step-count field survey by project student, 2026-10-28 (not officially verified)"
+      }
+    },
+    {
+      "id": "g34",
+      "kind": "destination",
+      "x": -18.9,
+      "y": 10.5,
+      "level": 0,
+      "indoor": true,
+      "buildingId": "prp",
+      "landmark": "classroom G34",
+      "provenance": {
+        "status": "unverified",
+        "source": "Step-count field survey by project student, 2026-10-28 (not officially verified)"
+      }
+    },
+    {
+      "id": "g32",
+      "kind": "destination",
+      "x": 18.2,
+      "y": 10.5,
+      "level": 0,
+      "indoor": true,
+      "buildingId": "prp",
+      "landmark": "classroom G32",
+      "provenance": {
+        "status": "unverified",
+        "source": "Step-count field survey by project student, 2026-10-28 (not officially verified)"
+      }
+    },
+    {
+      "id": "g31",
+      "kind": "destination",
+      "x": 33.6,
+      "y": 10.5,
+      "level": 0,
+      "indoor": true,
+      "buildingId": "prp",
+      "landmark": "classroom G31",
+      "provenance": {
+        "status": "unverified",
+        "source": "Step-count field survey by project student, 2026-10-28 (not officially verified)"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e2-out--e2",
+      "from": "e2-out",
+      "to": "e2",
+      "bidirectional": true,
+      "kind": "stairs",
+      "steps": "some",
+      "surface": "paved",
+      "lengthM": 3.1,
+      "covered": true,
+      "provenance": {
+        "status": "unverified",
+        "source": "Step-count field survey by project student, 2026-10-28 (not officially verified)"
+      }
+    },
+    {
+      "id": "e2--j1",
+      "from": "e2",
+      "to": "j1",
+      "bidirectional": true,
+      "kind": "corridor",
+      "steps": "none",
+      "surface": "tiled",
+      "lengthM": 10.6,
+      "covered": true,
+      "provenance": {
+        "status": "unverified",
+        "source": "Step-count field survey by project student, 2026-10-28 (not officially verified)"
+      },
+      "slopePct": 0
+    },
+    {
+      "id": "j1--g33",
+      "from": "j1",
+      "to": "g33",
+      "bidirectional": true,
+      "kind": "corridor",
+      "steps": "none",
+      "surface": "tiled",
+      "lengthM": 7.1,
+      "covered": true,
+      "provenance": {
+        "status": "unverified",
+        "source": "Step-count field survey by project student, 2026-10-28 (not officially verified)"
+      },
+      "slopePct": 0
+    },
+    {
+      "id": "g33--g34",
+      "from": "g33",
+      "to": "g34",
+      "bidirectional": true,
+      "kind": "corridor",
+      "steps": "none",
+      "surface": "tiled",
+      "lengthM": 12,
+      "covered": true,
+      "provenance": {
+        "status": "unverified",
+        "source": "Step-count field survey by project student, 2026-10-28 (not officially verified)"
+      },
+      "slopePct": 0
+    },
+    {
+      "id": "j1--g32",
+      "from": "j1",
+      "to": "g32",
+      "bidirectional": true,
+      "kind": "corridor",
+      "steps": "none",
+      "surface": "tiled",
+      "lengthM": 18.3,
+      "covered": true,
+      "provenance": {
+        "status": "unverified",
+        "source": "Step-count field survey by project student, 2026-10-28 (not officially verified)"
+      },
+      "slopePct": 0
+    },
+    {
+      "id": "g32--g31",
+      "from": "g32",
+      "to": "g31",
+      "bidirectional": true,
+      "kind": "corridor",
+      "steps": "none",
+      "surface": "tiled",
+      "lengthM": 15.6,
+      "covered": true,
+      "provenance": {
+        "status": "unverified",
+        "source": "Step-count field survey by project student, 2026-10-28 (not officially verified)"
+      },
+      "slopePct": 0
+    }
+  ],
+  "pois": [
+    {
+      "id": "poi-e2",
+      "name": "PRP E2 entrance",
+      "category": "entrance",
+      "nodeId": "e2",
+      "aliases": [
+        "e2",
+        "prp",
+        "entrance"
+      ],
+      "provenance": {
+        "status": "unverified",
+        "source": "Step-count field survey by project student, 2026-10-28 (not officially verified)"
+      }
+    },
+    {
+      "id": "poi-g31",
+      "name": "G31 (PRP ground floor)",
+      "category": "academic",
+      "nodeId": "g31",
+      "aliases": [
+        "g31"
+      ],
+      "provenance": {
+        "status": "unverified",
+        "source": "Step-count field survey by project student, 2026-10-28 (not officially verified)"
+      }
+    },
+    {
+      "id": "poi-g32",
+      "name": "G32 (PRP ground floor)",
+      "category": "academic",
+      "nodeId": "g32",
+      "aliases": [
+        "g32"
+      ],
+      "provenance": {
+        "status": "unverified",
+        "source": "Step-count field survey by project student, 2026-10-28 (not officially verified)"
+      }
+    },
+    {
+      "id": "poi-g33",
+      "name": "G33 (PRP ground floor)",
+      "category": "academic",
+      "nodeId": "g33",
+      "aliases": [
+        "g33"
+      ],
+      "provenance": {
+        "status": "unverified",
+        "source": "Step-count field survey by project student, 2026-10-28 (not officially verified)"
+      }
+    },
+    {
+      "id": "poi-g34",
+      "name": "G34 (PRP ground floor)",
+      "category": "academic",
+      "nodeId": "g34",
+      "aliases": [
+        "g34"
+      ],
+      "provenance": {
+        "status": "unverified",
+        "source": "Step-count field survey by project student, 2026-10-28 (not officially verified)"
+      }
+    }
+  ],
+  "checkpoints": [
+    {
+      "id": "cp-prp-e2",
+      "markerPayload": "VITIAR-PRP-E2-G",
+      "nodeId": "e2",
+      "buildingId": "prp",
+      "level": 0,
+      "facingDeg": 0,
+      "markerVersion": 1,
+      "provenance": {
+        "status": "unverified",
+        "source": "Step-count field survey by project student, 2026-10-28 (not officially verified)"
+      }
+    }
+  ]
+}
